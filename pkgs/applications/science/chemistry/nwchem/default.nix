@@ -12,8 +12,8 @@
 , mpi
 , blas
 , lapack
+, scalapack
 , python3
-, tcsh
 , bash
 , automake
 , autoconf
@@ -73,10 +73,10 @@ stdenv.mkDerivation rec {
     which
   ];
   buildInputs = [
-    tcsh
     openssh
     blas
     lapack
+    scalapack
     python3
   ];
   propagatedBuildInputs = [ mpi ];
@@ -97,7 +97,6 @@ stdenv.mkDerivation rec {
   '';
 
   postPatch = ''
-    find -type f -executable -exec sed -i "s:/bin/csh:${tcsh}/bin/tcsh:" \{} \;
     find -type f -name "GNUmakefile" -exec sed -i "s:/usr/bin/gcc:${gcc}/bin/gcc:" \{} \;
     find -type f -name "GNUmakefile" -exec sed -i "s:/bin/rm:rm:" \{} \;
     find -type f -executable -exec sed -i "s:/bin/rm:rm:" \{} \;
@@ -108,6 +107,7 @@ stdenv.mkDerivation rec {
 
     # /usr/bin/env bash fails in sandbox/Makefile setting
     substituteInPlace src/config/makefile.h --replace '/usr/bin/env bash' "${stdenv.shell}"
+    substituteInPlace src/peigs//DEFS --replace '/usr/bin/env bash' "${stdenv.shell}"
 
     patchShebangs ./
   '';
@@ -127,14 +127,16 @@ stdenv.mkDerivation rec {
     export NWCHEM_MODULES="all python"
 
     export USE_PYTHONCONFIG="y"
-    export USE_PYTHON64="n"
-    export PYTHONLIBTYPE="so"
-    export PYTHONHOME="${python3}"
-    export PYTHONVERSION=${lib.versions.majorMinor python3.version}
+#    export USE_PYTHON64="n"
+#    export PYTHONLIBTYPE="so"
+#    export PYTHONHOME="${python3}"
+#    export PYTHONVERSION=${lib.versions.majorMinor python3.version}
 
     export BLASOPT="-L${blas}/lib -lblas"
     export LAPACK_LIB="-L${lapack}/lib -llapack"
     export BLAS_SIZE=${if blas.isILP64 then "8" else "4"}
+    export SCALAPACK_LIB="-L${scalapack}/lib -lscalapack"
+    export SCALAPACK_SIZE=${if scalapack.isILP64 then "8" else "4"}
 
     # extra TCE related options
     export MRCC_METHODS="y"
